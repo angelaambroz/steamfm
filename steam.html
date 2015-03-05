@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+			<meta charset="utf-8">
+			<title>Last.fm: Steam</title>
+			<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+			<script src="http://d3js.org/queue.v1.min.js"></script>
+			<link href='http://fonts.googleapis.com/css?family=Lato:100,100italic,300,300italic' rel='stylesheet' type='text/css'>
+			<link href='http://fonts.googleapis.com/css?family=Raleway:400,200' rel='stylesheet' type='text/css'>
+	</head>
+
+<style>
+
+.blurb {
+	padding: 8px;
+	margin: 20px;
+}
+
+.blurb h3 {
+	font: 400 30px 'Raleway', sans-serif;
+}
+
+.blurb p {
+	font: 300 14px 'Lato', sans-serif;
+	width: 200px;
+
+}
+
+form {
+  border: none;
+  font: 100 24px "Lato", sans-serif;
+  padding: 20px 30px;
+}
+
+form input {
+  font: 100 24px "Lato", sans-serif;
+  padding: 2px 8px;
+  border: solid 1px #ccc;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+  margin: 5px;
+}
+
+#userName {
+	width: 250px;
+}
+
+#topNumber {
+	width: 110px;
+}
+
+.update-button:hover {
+	background-color: #999;
+	cursor: pointer;
+}
+
+.update-button:active {
+	background-color: #666;
+}
+
+#tooltip {
+	position: absolute;
+	width: 90px;
+	height: auto;
+	padding: 10px;
+	background-color: none;
+	pointer-events: none;
+}
+
+#tooltip p {
+	margin: 0;
+	font: 400 14px 'Raleway', sans-serif;
+	line-height: 15px;
+	color: gray;
+}
+
+#tooltip img {
+	height: 50px;
+	width: 50px;
+	-webkit-border-radius: 50%;
+	-moz-border-radius: 50%;
+	border-radius: 50%;
+}
+
+#tooltip.hidden {
+	display: none;
+}
+
+</style>
+
+
+<body>
+
+<div id="tooltip" class="hidden" style="left: 600px, top: 400px">
+	<div id="pic"><p><img src="unknown.png"></p></div>
+	<p><span id="genre">hip hop</span></p>
+	<p id="plays">50 plays</p>
+</div>
+
+<div class="blurb">
+	<h3>A(nother) pretty way to visualize your listening habits</h3>
+	<p>Courtesy of the <a href="http://www.last.fm/api" target="_blank">last.fm API</a>. Made by <a href="http://www.angelaambroz.com/" target="_blank">Angela Ambroz</a> in <a href="http://d3js.org/" target="_blank">d3.js</a>.</p> 
+	<p>Use your <a href="http://last.fm" target="_blank">last.fm</a> username. Or your friend's. Or the demo user, <em>rj</em>.</p>
+</div>
+
+		<div class="user-inputs">
+			<form>
+			What's your username? <input type="text" name="userName" id="userName" placeholder="rj"><br>
+			<input name="updateButton" 
+           type="button" 
+           class="update-button"
+           value="Update" />
+			</form>
+		</div>
+
+<script>
+
+"use strict";
+
+var w = 600,
+	h = 300,
+	radius = Math.min(w, h) / 2, 
+	totalPlays = 0,
+	color = d3.scale.category20(),
+	comma = d3.format(","),
+	genreIcon;
+
+var scale = d3.scale.linear()
+	.range([-15,20])
+	.domain([0, 10000]);
+
+
+var svg = d3.select("body")
+	.append("svg")
+	.attr("width", w)
+	.attr("height", h)
+	.append("g")
+	.attr("transform", "translate(" + w/2 + "," + h/2 + ")");
+
+
+d3.select('input[type=button]').on('click', function() {
+  
+  var userText = document.getElementById('userName').value,
+      weeklyChart, 
+      tracks,
+      artistTag,
+      dataset;
+
+   if (!userText) { alert("Please enter a username and number."); };
+
+   //URLs
+  var top = 'http://ws.audioscrobbler.com/2.0/?method=user.getweeklytrackchart&user=' + userText + '&api_key=07eef8055a0b408f70b1b3d5039bbaf5&format=json';
+
+
+
+	function fillcolor(d) {
+
+		if (d.depth==1) {
+			return color(d.name.length - d.name.charCodeAt(0));			
+		};
+
+  		if (d.depth==2) {
+  			var parentColor = d3.hsl(color(d.parent.name.length - d.parent.name.charCodeAt(0)));
+  			parentColor.s -= 0.12;
+  			parentColor.l += 0.1;
+  			return parentColor;
+
+  		};
+  	
+  	};
+
+
+	//First JSON call
+	d3.json(top, function(json) {
+
+		weeklyChart = json.weeklytrackchart.track;
+		
+		//Merge, using a dynamic .queue() call
+
+		var q = queue()
+			.defer(d3.json, top);
+
+		weeklyChart.forEach(function(d) { 
+
+				tracks = 'http://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=07eef8055a0b408f70b1b3d5039bbaf5&artist='+ d.artist['#text'] + '&track=' + d.name + '&format=json';				
+				
+				q.defer(d3.json, tracks);
+			
+				});
+
+		q.awaitAll(function(error) {	
+
+
+				//DATA
+				//Setting up the dataset (merging, cleaning)
+
+				//dataset = arguments[1][0].topartists.artist
+
+				console.log(arguments);
+
+				
+				for (var i = 1; i < arguments[1].length ; i++) {	
+
+					var j = i - 1;
+
+					if (!arguments[1][i].toptags || !arguments[1][i].toptags.tag || !arguments[1][i].toptags.tag[0]) { 
+
+						dataset[j]["tag"] = "none"; 
+
+					} else {
+
+					var artistName = arguments[1][0].topartists.artist[j].name;
+					var artistTagName = arguments[1][i].toptags['@attr'].artist;
+
+						if ( artistName == artistTagName ) {
+
+							artistTag = arguments[1][i].toptags.tag[0].name.toLowerCase().split('-').join(' ');
+
+							dataset[j]["tag"] = artistTag;
+							dataset[j]["tagurl"] = arguments[1][i].toptags.tag[0].url;
+
+
+						}; //name check conditional if statement
+					}; // if tags exist
+				}; //close for loop (adding tags to dataset)
+
+				//Resetting totalPlays for each user/dataset
+				totalPlays = 0;
+
+				dataset.forEach(function(d) {
+					d.playcount = +d.playcount;
+					totalPlays += d.playcount;
+				});
+
+
+				//Organizing data by genre/tag
+				dataset = { "key": "music", "values":
+					d3.nest()
+					.key(function(d) { return d.tag; })
+					.sortValues(function(a, b) { return parseFloat(b.playcount) - parseFloat(a.playcount); })
+					.entries(dataset)
+				};
+
+				//Treemap-ifying
+				dataset = { "name": "root", "children":
+			        dataset.values.map(function(d){
+			            return { "name": d.key, "children": 
+			              d.values
+			            }; 
+			         }) 
+			      };
+
+
+
+			}); //queue.awaitAll() closer
+  }); //topArtists json call closer
+}); //on click function closer
+
+
+</script>
+</body>
+</html>
