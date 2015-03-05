@@ -23,6 +23,7 @@ last-steam
 ### Resources
 
 * API info: [last.fm - user.getTopArtists](http://www.last.fm/api/show/user.getTopArtists)
+* Word of Bostock: [queue.js - Skipping errors](https://github.com/mbostock/queue/issues/30)
 
 
 
