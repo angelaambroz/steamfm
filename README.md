@@ -18,11 +18,15 @@ last-steam
 5. Why are the track `mbid`s not working?
 6. ~~Replace `mbid`s with artist/song names.~~
 7. `.queue` is failing when any of the (many!) calls fail. How do prevent/accommodate this?
+8. `absolute`-positioned small, gray-fonted summary of what this all is. Design!
 
 
 ### Resources
 
-* API info: [last.fm - user.getTopArtists](http://www.last.fm/api/show/user.getTopArtists)
+* API info: [last.fm - user.getWeeklyTrackChart](http://www.last.fm/api/show/user.getWeeklyTrackChart)
+* API info: [last.fm - user.getFriends](http://www.last.fm/api/show/user.getFriends)
+* API info: [last.fm - track.getInfo](http://www.last.fm/api/show/track.getInfo)
+* API info: [last.fm - ]
 * Word of Bostock: [queue.js - Skipping errors](https://github.com/mbostock/queue/issues/30)
 
 

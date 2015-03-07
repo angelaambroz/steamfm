@@ -89,7 +89,6 @@ form input {
 
 </style>
 
-
 <body>
 
 <div id="tooltip" class="hidden" style="left: 600px, top: 400px">
@@ -153,7 +152,6 @@ d3.select('input[type=button]').on('click', function() {
   var top = 'http://ws.audioscrobbler.com/2.0/?method=user.getweeklytrackchart&user=' + userText + '&api_key=07eef8055a0b408f70b1b3d5039bbaf5&format=json';
 
 
-
 	function fillcolor(d) {
 
 		if (d.depth==1) {
@@ -181,6 +179,33 @@ d3.select('input[type=button]').on('click', function() {
 		var q = queue()
 			.defer(d3.json, top);
 
+
+/*
+		queue(1)
+    .defer(ignoreError, taskThatSometimesFails)
+    .defer(ignoreError, taskThatSometimesFails)
+    .awaitAll(function(error, results) {
+      if (error) throw error; // never happens
+      console.log(results); // e.g., [0.23068457026965916, undefined]
+    });
+
+function ignoreError(task, callback) {
+  task(function(error, result) {
+    return callback(null, result); // ignore error
+  });
+}
+
+function taskThatSometimesFails(callback) {
+  setTimeout(function() {
+    var x = Math.random();
+    if (x > .5) return callback(new Error("failed"));
+    callback(null, x);
+  }, 250);
+}
+*/
+
+
+		//Blows my mind.
 		weeklyChart.forEach(function(d) { 
 
 				tracks = 'http://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=07eef8055a0b408f70b1b3d5039bbaf5&artist='+ d.artist['#text'] + '&track=' + d.name + '&format=json';				
@@ -189,8 +214,23 @@ d3.select('input[type=button]').on('click', function() {
 			
 				});
 
+		function ignoreError(task, callback) {
+			task(function(error, result) {
+				return callback(null, result);
+			});
+		}
+
+		function taskThatSometimesFails(callback) {
+			setTimeout(function() {
+				if (error) return callback(new Error("failed"));
+				return callback(null, tracks);
+			}, 1000);
+		}
+
+
 		q.awaitAll(function(error) {	
 
+				if (error) throw error;
 
 				//DATA
 				//Setting up the dataset (merging, cleaning)
